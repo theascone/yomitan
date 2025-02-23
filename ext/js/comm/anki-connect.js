@@ -374,6 +374,64 @@ export class AnkiConnect {
     }
 
     /**
+     * @param {import('anki').NoteId[]} noteIds
+     * @param {string} mode
+     */
+    async bumpNotes(noteIds, mode) {
+        // TODO make this configurable
+        const bumpLogFieldName = "BumpLog"
+        const listeningCardIdx = 1;
+        const readingCardIdx = 0;
+
+        const time = Date.now();
+
+        let noteInfos = await this._invoke('notesInfo', {notes: noteIds});
+        for (const noteInfo of noteInfos) {
+            if (noteInfo.modelName !== "Mining") continue;
+            let json = noteInfo.fields[bumpLogFieldName].value
+            let data = parseJson(`{"${listeningCardIdx}": [], "${readingCardIdx}": []}`)
+            if (json !== "") {
+                data = parseJson(json);
+            }
+
+            let key = -1;
+            switch (mode) {
+                case "listening":
+                    key = listeningCardIdx;
+                    break;
+                case "reading":
+                    key = readingCardIdx;
+                    break;
+            };
+
+            data[String(key)].push(time);
+
+            await this._invoke('updateNoteFields', {
+                note: {id: noteInfo.noteId, fields: {[bumpLogFieldName]: JSON.stringify(data)}}
+            });
+
+            let cardInfos = await this._invoke('cardsInfo', {cards: noteInfo.cards});
+            for (const cardInfo of cardInfos) {
+                if (cardInfo.ord !== key) continue;
+
+                //await this._invoke('unsuspend', {cards: [cardInfo.cardId]});
+                if (cardInfo.type !== 0) {
+                    await this._invoke('setDueDate', {
+                        cards: [cardInfo.cardId],
+                        days: "0"
+                    });
+                    await this._invoke('answerCards', {
+                        answers: [{
+                            cardId: cardInfo.cardId,
+                            ease: 1
+                        }]
+                    });
+                }
+            }
+        }
+    }
+
+    /**
      * Gets information about the AnkiConnect APIs available.
      * @param {string[]} scopes A list of scopes to get information about.
      * @param {?string[]} actions A list of actions to check for
