@@ -393,12 +393,7 @@ export class AnkiConnect {
                     break;
             };
 
-            let e = data[String(key)];
-            if (!Array.isArray(e)) {
-                e = [e];
-            }
-            e.push(time);
-            data[String(key)] = e;
+            data[String(key)].push(time);
 
             await this._invoke('updateNoteFields', {
                 note: {id: noteInfo.noteId, fields: {[bumpLogFieldName]: JSON.stringify(data)}}
