@@ -669,6 +669,7 @@ button.sidebar-button.sidebar-button-highlight {
     z-index: -1;
 }
 
+/*
 .note-actions-container .action-button-container:first-child {
     flex-direction: row-reverse;
 }
@@ -680,6 +681,7 @@ button.sidebar-button.sidebar-button-highlight {
     height: 1px;
     width: auto;
 }
+*/
 
 .note-actions-container .action-button-container:only-child::after {
     display: none;
@@ -762,6 +764,9 @@ button.action-button:active:not(:disabled) {
 .icon[data-icon=play-audio]     { background-image: url('/images/play-audio.svg'); }
 .icon[data-icon=source-term]    { background-image: url('/images/source-term.svg'); }
 .icon[data-icon=entry-current]  { background-image: url('/images/entry-current.svg'); }
+.icon[data-icon=bump-listening] { background-image: url('/images/bump-listening.svg'); }
+.icon[data-icon=bump-reading]   { background-image: url('/images/bump-reading.svg'); }
+
 .action-icon {
     display: block;
     width: var(--action-button-size);

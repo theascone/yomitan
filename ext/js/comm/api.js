@@ -145,6 +145,15 @@ export class API {
     }
 
     /**
+     * @param {import('api').ApiParam<'bumpNotes', 'noteIds'>} noteIds
+     * @param {import('api').ApiParam<'bumpNotes', 'mode'>} mode
+     * @returns {Promise<import('api').ApiReturn<'bumpNotes'>>}
+     */
+    bumpNotes(noteIds, mode) {
+        return this._invoke('bumpNotes', {noteIds, mode});
+    }
+
+    /**
      * @param {import('api').ApiParam<'suspendAnkiCardsForNote', 'noteId'>} noteId
      * @returns {Promise<import('api').ApiReturn<'suspendAnkiCardsForNote'>>}
      */

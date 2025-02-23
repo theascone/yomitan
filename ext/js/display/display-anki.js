@@ -107,6 +107,8 @@ export class DisplayAnki {
         /** @type {(event: MouseEvent) => void} */
         this._onNoteSaveBind = this._onNoteSave.bind(this);
         /** @type {(event: MouseEvent) => void} */
+        this._onNoteBumpBind = this._onNoteBump.bind(this);
+        /** @type {(event: MouseEvent) => void} */
         this._onViewNotesButtonClickBind = this._onViewNotesButtonClick.bind(this);
         /** @type {(event: MouseEvent) => void} */
         this._onViewNotesButtonContextMenuBind = this._onViewNotesButtonContextMenu.bind(this);
@@ -253,6 +255,16 @@ export class DisplayAnki {
         this._noteContext = this._getNoteContext();
     }
 
+    /**
+     * @param {import('display').EventArgument<'contentUpdateEntry'>} details
+     */
+    _onContentUpdateEntry({element}) {
+        const eventListeners = this._eventListeners;
+        for (const node of element.querySelectorAll('.action-button[data-action=bump-note]')) {
+            eventListeners.addEventListener(node, 'click', this._onNoteBumpBind);
+        }
+    }
+
     /** */
     _onContentUpdateComplete() {
         void this._updateDictionaryEntryDetails();
@@ -278,6 +290,18 @@ export class DisplayAnki {
         }
         const index = this._display.getElementDictionaryEntryIndex(element);
         void this._saveAnkiNote(index, Number.parseInt(cardFormatIndex, 10));
+    }
+
+    /**
+     * @param {MouseEvent} e
+     */
+    _onNoteBump(e) {
+        e.preventDefault();
+        const element = /** @type {HTMLElement} */ (e.currentTarget);
+        const mode = this._getValidBumpMode(element.dataset.mode);
+        if (mode === null) { return; }
+        //const index = this._display.getElementDictionaryEntryIndex(element);
+        void this._bumpNotes(element, mode);
     }
 
     /**
@@ -462,6 +486,7 @@ export class DisplayAnki {
     _updateSaveButtons(dictionaryEntryDetails) {
         const displayTagsAndFlags = this._displayTagsAndFlags;
         for (let entryIndex = 0, entryCount = dictionaryEntryDetails.length; entryIndex < entryCount; ++entryIndex) {
+            var allNoteIds = [];
             for (const [cardFormatIndex, {canAdd, noteIds, noteInfos, ankiError}] of dictionaryEntryDetails[entryIndex].noteMap.entries()) {
                 const button = this._createSaveButtons(entryIndex, cardFormatIndex);
                 if (button !== null) {
@@ -479,6 +504,7 @@ export class DisplayAnki {
 
                 const validNoteIds = noteIds?.filter((id) => id !== INVALID_NOTE_ID) ?? [];
 
+                allNoteIds = [...allNoteIds, ...validNoteIds];
                 this._createViewNoteButton(entryIndex, cardFormatIndex, validNoteIds, Array.isArray(noteInfos) ? noteInfos : []);
 
                 if (displayTagsAndFlags !== 'never' && Array.isArray(noteInfos)) {
@@ -486,6 +512,9 @@ export class DisplayAnki {
                     this._setupFlagsIndicator(entryIndex, cardFormatIndex, noteInfos);
                 }
             }
+
+            this._updateBumpNodeButton(entryIndex, "listening", allNoteIds, false);
+            this._updateBumpNodeButton(entryIndex, "reading", allNoteIds, false);
         }
     }
 
@@ -782,6 +811,9 @@ export class DisplayAnki {
                 this._updateSaveButtonForDuplicateBehavior(button, [noteId]);
 
                 this._updateViewNoteButton(dictionaryEntryIndex, cardFormatIndex, [noteId]);
+
+                this._updateBumpNodeButton(dictionaryEntryIndex, "listening", [noteId], true);
+                this._updateBumpNodeButton(dictionaryEntryIndex, "reading", [noteId], true);
 
                 if (this._forceSync) {
                     try {
@@ -1227,6 +1259,33 @@ export class DisplayAnki {
     }
 
     /**
+     * @param {number} index
+     * @param {string} mode
+     * @param {number[]} noteIds
+     * @param {boolean} append
+     */
+    _updateBumpNodeButton(index, mode, noteIds, append) {
+        const button = this._getBumpNoteButton(index, mode);
+        if (button === null) { return; }
+        /** @type {(number|string)[]} */
+        let allNoteIds = noteIds;
+        if (append) {
+            const currentNoteIds = button.dataset.noteIds;
+            if (typeof currentNoteIds === 'string' && currentNoteIds.length > 0) {
+                allNoteIds = [...allNoteIds, ...currentNoteIds.split(' ')];
+            }
+        }
+        allNoteIds = [...new Set(allNoteIds)];
+
+        const disabled = (allNoteIds.length === 0);
+        button.disabled = disabled;
+        button.hidden = disabled;
+        button.dataset.noteIds = [...allNoteIds].join(' ');
+
+        this._eventListeners.addEventListener(button, 'click', this._onNoteBumpBind);
+    }
+
+    /**
      * @param {HTMLElement} node
      */
     async _viewNotes(node) {
@@ -1276,6 +1335,16 @@ export class DisplayAnki {
 
     /**
      * @param {HTMLElement} node
+     * @param {string} mode
+     */
+    async _bumpNotes(node, mode) {
+        const noteIds = this._getNodeNoteIds(node);
+        if (noteIds.length === 0) { return; }
+        await this._display.application.api.bumpNotes(noteIds, mode);
+    }
+
+    /**
+     * @param {HTMLElement} node
      * @returns {number[]}
      */
     _getNodeNoteIds(node) {
@@ -1302,6 +1371,17 @@ export class DisplayAnki {
     }
 
     /**
+     * @param {number} index
+     * @param {string} mode
+     * @returns {?HTMLButtonElement}
+     */
+    _getBumpNoteButton(index, mode) {
+        const entry = this._getEntry(index);
+        return entry !== null ? entry.querySelector(`.action-button[data-action=bump-note][data-mode=${mode}]`) : null;
+    }
+
+    /**
+     * Shows notes for selected pop-up entry when "View Notes" hotkey is used.
      * @param {unknown} cardFormatStringIndex
      */
     _hotkeyViewNotesForSelectedEntry(cardFormatStringIndex) {
@@ -1399,6 +1479,20 @@ export class DisplayAnki {
             return 'learning';
         }
         return 'new';
+    }
+
+    /**
+     * @param {string|undefined} value
+     * @returns {string|null}
+     */
+    _getValidBumpMode(value) {
+        switch(value) {
+            case 'listening':
+            case 'reading':
+                return value;
+            default:
+                return null;
+        }
     }
 }
 
