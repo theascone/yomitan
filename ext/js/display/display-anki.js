@@ -109,6 +109,8 @@ export class DisplayAnki {
         /** @type {(event: MouseEvent) => void} */
         this._onNoteSaveBind = this._onNoteSave.bind(this);
         /** @type {(event: MouseEvent) => void} */
+        this._onNoteBumpBind = this._onNoteBump.bind(this);
+        /** @type {(event: MouseEvent) => void} */
         this._onViewNotesButtonClickBind = this._onViewNotesButtonClick.bind(this);
         /** @type {(event: MouseEvent) => void} */
         this._onViewNotesButtonContextMenuBind = this._onViewNotesButtonContextMenu.bind(this);
@@ -276,6 +278,9 @@ export class DisplayAnki {
             eventListeners.addEventListener(node, 'contextmenu', this._onViewNotesButtonContextMenuBind);
             eventListeners.addEventListener(node, 'menuClose', this._onViewNotesButtonMenuCloseBind);
         }
+        for (const node of element.querySelectorAll('.action-button[data-action=bump-note]')) {
+            eventListeners.addEventListener(node, 'click', this._onNoteBumpBind);
+        }
     }
 
     /** */
@@ -300,6 +305,18 @@ export class DisplayAnki {
         if (mode === null) { return; }
         const index = this._display.getElementDictionaryEntryIndex(element);
         void this._saveAnkiNote(index, mode);
+    }
+
+    /**
+     * @param {MouseEvent} e
+     */
+    _onNoteBump(e) {
+        e.preventDefault();
+        const element = /** @type {HTMLElement} */ (e.currentTarget);
+        const mode = this._getValidBumpMode(element.dataset.mode);
+        if (mode === null) { return; }
+        //const index = this._display.getElementDictionaryEntryIndex(element);
+        void this._bumpNotes(element, mode);
     }
 
     /**
@@ -490,7 +507,10 @@ export class DisplayAnki {
                 }
             }
 
-            this._updateViewNoteButton(i, allNoteIds !== null ? [...allNoteIds] : [], false);
+            let noteIds = allNoteIds !== null ? [...allNoteIds] : []
+            this._updateViewNoteButton(i, noteIds, false);
+            this._updateBumpNodeButton(i, "listening", noteIds, false);
+            this._updateBumpNodeButton(i, "reading", noteIds, false);
         }
     }
 
@@ -787,6 +807,8 @@ export class DisplayAnki {
                 this._updateSaveButtonForDuplicateBehavior(button, [noteId]);
 
                 this._updateViewNoteButton(dictionaryEntryIndex, [noteId], true);
+                this._updateBumpNodeButton(dictionaryEntryIndex, "listening", [noteId], true);
+                this._updateBumpNodeButton(dictionaryEntryIndex, "reading", [noteId], true);
             }
         }
     }
@@ -1152,6 +1174,29 @@ export class DisplayAnki {
     }
 
     /**
+     * @param {number} index
+     * @param {string} mode
+     * @param {number[]} noteIds
+     * @param {boolean} prepend
+     */
+    _updateBumpNodeButton(index, mode, noteIds, prepend) {
+        const button = this._getBumpNoteButton(index, mode);
+        if (button === null) { return; }
+        /** @type {(number|string)[]} */
+        let allNoteIds = noteIds;
+        if (prepend) {
+            const currentNoteIds = button.dataset.noteIds;
+            if (typeof currentNoteIds === 'string' && currentNoteIds.length > 0) {
+                allNoteIds = [...allNoteIds, ...currentNoteIds.split(' ')];
+            }
+        }
+        const disabled = (allNoteIds.length === 0);
+        button.disabled = disabled;
+        button.hidden = disabled;
+        button.dataset.noteIds = allNoteIds.join(' ');
+    }
+
+    /**
      * @param {HTMLElement} node
      */
     async _viewNotes(node) {
@@ -1201,6 +1246,16 @@ export class DisplayAnki {
 
     /**
      * @param {HTMLElement} node
+     * @param {string} mode
+     */
+    async _bumpNotes(node, mode) {
+        const noteIds = this._getNodeNoteIds(node);
+        if (noteIds.length === 0) { return; }
+        await this._display.application.api.bumpNotes(noteIds, mode);
+    }
+
+    /**
+     * @param {HTMLElement} node
      * @returns {number[]}
      */
     _getNodeNoteIds(node) {
@@ -1227,6 +1282,16 @@ export class DisplayAnki {
     }
 
     /**
+     * @param {number} index
+     * @param {string} mode
+     * @returns {?HTMLButtonElement}
+     */
+    _getBumpNoteButton(index, mode) {
+        const entry = this._getEntry(index);
+        return entry !== null ? entry.querySelector(`.action-button[data-action=bump-note][data-mode=${mode}]`) : null;
+    }
+
+    /**
      * Shows notes for selected pop-up entry when "View Notes" hotkey is used.
      */
     _viewNotesForSelectedEntry() {
@@ -1246,6 +1311,20 @@ export class DisplayAnki {
             case 'kanji':
             case 'term-kanji':
             case 'term-kana':
+                return value;
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * @param {string|undefined} value
+     * @returns {string|null}
+     */
+    _getValidBumpMode(value) {
+        switch(value) {
+            case 'listening':
+            case 'reading':
                 return value;
             default:
                 return null;

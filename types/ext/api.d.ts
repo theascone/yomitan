@@ -209,6 +209,13 @@ type ApiSurface = {
         };
         return: Settings.AnkiNoteGuiMode;
     };
+    bumpNotes: {
+        params: {
+            noteIds: Anki.NoteId[];
+            mode: string;
+        };
+        return: void;
+    };
     suspendAnkiCardsForNote: {
         params: {
             noteId: Anki.NoteId;

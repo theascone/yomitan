@@ -713,6 +713,9 @@ button.action-button:active {
 .icon[data-icon=play-audio]     { background-image: url('/images/play-audio.svg'); }
 .icon[data-icon=source-term]    { background-image: url('/images/source-term.svg'); }
 .icon[data-icon=entry-current]  { background-image: url('/images/entry-current.svg'); }
+.icon[data-icon=bump-listening] { background-image: url('/images/bump-listening.svg'); }
+.icon[data-icon=bump-reading]   { background-image: url('/images/bump-reading.svg'); }
+
 .action-icon {
     display: block;
     width: var(--action-button-size);

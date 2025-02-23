@@ -155,6 +155,7 @@ export class Backend {
             ['getAnkiNoteInfo',              this._onApiGetAnkiNoteInfo.bind(this)],
             ['injectAnkiNoteMedia',          this._onApiInjectAnkiNoteMedia.bind(this)],
             ['viewNotes',                    this._onApiViewNotes.bind(this)],
+            ['bumpNotes',                    this._onApiBumpNotes.bind(this)],
             ['suspendAnkiCardsForNote',      this._onApiSuspendAnkiCardsForNote.bind(this)],
             ['commandExec',                  this._onApiCommandExec.bind(this)],
             ['getTermAudioInfoList',         this._onApiGetTermAudioInfoList.bind(this)],
@@ -718,6 +719,11 @@ export class Backend {
         }
         await this._anki.guiBrowseNotes(noteIds);
         return 'browse';
+    }
+
+    /** @type {import('api').ApiHandler<'bumpNotes'>} */
+    async _onApiBumpNotes({noteIds, mode}) {
+        await this._anki.bumpNotes(noteIds, mode);
     }
 
     /** @type {import('api').ApiHandler<'suspendAnkiCardsForNote'>} */
