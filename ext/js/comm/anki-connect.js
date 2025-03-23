@@ -403,9 +403,18 @@ export class AnkiConnect {
             for (const cardInfo of cardInfos) {
                 if (cardInfo.ord !== key) continue;
 
-                await this._invoke('unsuspend', {cards: [cardInfo.cardId]});
+                //await this._invoke('unsuspend', {cards: [cardInfo.cardId]});
                 if (cardInfo.type !== 0) {
-                    await this._invoke('relearnCards', {cards: [cardInfo.cardId]});
+                    await this._invoke('setDueDate', {
+                        cards: [cardInfo.cardId],
+                        days: "0"
+                    });
+                    await this._invoke('answerCards', {
+                        answers: [{
+                            cardId: cardInfo.cardId,
+                            ease: 1
+                        }]
+                    });
                 }
             }
         }
