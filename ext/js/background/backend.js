@@ -804,8 +804,8 @@ export class Backend {
     }
 
     /** @type {import('api').ApiHandler<'bumpNotes'>} */
-    async _onApiBumpNotes({noteIds, mode}) {
-        await this._anki.bumpNotes(noteIds, mode);
+    async _onApiBumpNotes({noteIds, mode, bumpOptions}) {
+        await this._anki.bumpNotes(noteIds, mode, bumpOptions);
     }
 
     /** @type {import('api').ApiHandler<'suspendAnkiCardsForNote'>} */

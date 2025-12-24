@@ -98,6 +98,13 @@ export class DisplayAnki {
         this._cardFormats = [];
         /** @type {import('settings').DictionariesOptions} */
         this._dictionaries = [];
+        /** @type {import('settings').AnkiBumpOptions} */
+        this._bumpOptions = {
+            bumpLogFieldName: 'BumpLog',
+            listeningCardIndex: 0,
+            readingCardIndex: 1,
+            targetModelNames: [],
+        };
         /** @type {HTMLElement} */
         this._menuContainer = querySelectorNotNull(document, '#popup-menus');
         /** @type {(event: MouseEvent) => void} */
@@ -215,6 +222,7 @@ export class DisplayAnki {
                 screenshot: {format, quality},
                 downloadTimeout,
                 forceSync,
+                bumpOptions,
             },
             scanning: {length: scanLength},
         } = options;
@@ -238,6 +246,7 @@ export class DisplayAnki {
         this._cardFormats = cardFormats;
         this._dictionaries = dictionaries;
         this._forceSync = forceSync;
+        this._bumpOptions = bumpOptions;
 
         void this._updateAnkiFieldTemplates(options);
     }
@@ -486,7 +495,8 @@ export class DisplayAnki {
     _updateSaveButtons(dictionaryEntryDetails) {
         const displayTagsAndFlags = this._displayTagsAndFlags;
         for (let entryIndex = 0, entryCount = dictionaryEntryDetails.length; entryIndex < entryCount; ++entryIndex) {
-            var allNoteIds = [];
+            /** @type {number[]} */
+            let allNoteIds = [];
             for (const [cardFormatIndex, {canAdd, noteIds, noteInfos, ankiError}] of dictionaryEntryDetails[entryIndex].noteMap.entries()) {
                 const button = this._createSaveButtons(entryIndex, cardFormatIndex);
                 if (button !== null) {
@@ -504,7 +514,7 @@ export class DisplayAnki {
 
                 const validNoteIds = noteIds?.filter((id) => id !== INVALID_NOTE_ID) ?? [];
 
-                allNoteIds = [...allNoteIds, ...validNoteIds];
+                allNoteIds.push(...validNoteIds);
                 this._createViewNoteButton(entryIndex, cardFormatIndex, validNoteIds, Array.isArray(noteInfos) ? noteInfos : []);
 
                 if (displayTagsAndFlags !== 'never' && Array.isArray(noteInfos)) {
@@ -1340,7 +1350,7 @@ export class DisplayAnki {
     async _bumpNotes(node, mode) {
         const noteIds = this._getNodeNoteIds(node);
         if (noteIds.length === 0) { return; }
-        await this._display.application.api.bumpNotes(noteIds, mode);
+        await this._display.application.api.bumpNotes(noteIds, mode, this._bumpOptions);
     }
 
     /**

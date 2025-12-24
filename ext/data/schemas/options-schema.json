@@ -1001,7 +1001,8 @@
                                     "noteGuiMode",
                                     "apiKey",
                                     "downloadTimeout",
-                                    "forceSync"
+                                    "forceSync",
+                                    "bumpOptions"
                                 ],
                                 "properties": {
                                     "enable": {
@@ -1177,6 +1178,38 @@
                                     "forceSync": {
                                         "type": "boolean",
                                         "default": false
+                                    },
+                                    "bumpOptions": {
+                                        "type": "object",
+                                        "required": [
+                                            "bumpLogFieldName",
+                                            "listeningCardIndex",
+                                            "readingCardIndex",
+                                            "targetModelNames"
+                                        ],
+                                        "properties": {
+                                            "bumpLogFieldName": {
+                                                "type": "string",
+                                                "default": "BumpLog"
+                                            },
+                                            "listeningCardIndex": {
+                                                "type": "integer",
+                                                "default": 0,
+                                                "minimum": 0
+                                            },
+                                            "readingCardIndex": {
+                                                "type": "integer",
+                                                "default": 1,
+                                                "minimum": 0
+                                            },
+                                            "targetModelNames": {
+                                                "type": "array",
+                                                "default": [],
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             },

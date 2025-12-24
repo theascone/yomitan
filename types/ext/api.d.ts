@@ -219,6 +219,7 @@ type ApiSurface = {
         params: {
             noteIds: Anki.NoteId[];
             mode: string;
+            bumpOptions: Settings.AnkiBumpOptions;
         };
         return: void;
     };

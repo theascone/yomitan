@@ -314,6 +314,14 @@ export type AnkiOptions = {
     apiKey: string;
     downloadTimeout: number;
     forceSync: boolean;
+    bumpOptions: AnkiBumpOptions;
+};
+
+export type AnkiBumpOptions = {
+    bumpLogFieldName: string;
+    listeningCardIndex: number;
+    readingCardIndex: number;
+    targetModelNames: string[];
 };
 
 export type AnkiScreenshotOptions = {

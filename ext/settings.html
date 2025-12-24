@@ -2129,6 +2129,47 @@
                 <label class="toggle"><input type="checkbox" data-setting="anki.forceSync"><span class="toggle-body"><span class="toggle-track"></span><span class="toggle-knob"></span></span></label>
             </div>
         </div></div>
+        <div class="settings-item advanced-only"><div class="settings-item-inner">
+            <div class="settings-item-left">
+                <div class="settings-item-label">Bump log field name</div>
+                <div class="settings-item-description">The Anki field where bump logs are stored.</div>
+            </div>
+            <div class="settings-item-right">
+                <input type="text" spellcheck="false" data-setting="anki.bumpOptions.bumpLogFieldName">
+            </div>
+        </div></div>
+        <div class="settings-item advanced-only"><div class="settings-item-inner">
+            <div class="settings-item-left">
+                <div class="settings-item-label">Listening card index</div>
+                <div class="settings-item-description">The index of the card format used for listening cards (0-based).</div>
+            </div>
+            <div class="settings-item-right">
+                <input type="number" data-setting="anki.bumpOptions.listeningCardIndex" min="0">
+            </div>
+        </div></div>
+        <div class="settings-item advanced-only"><div class="settings-item-inner">
+            <div class="settings-item-left">
+                <div class="settings-item-label">Reading card index</div>
+                <div class="settings-item-description">The index of the card format used for reading cards (0-based).</div>
+            </div>
+            <div class="settings-item-right">
+                <input type="number" data-setting="anki.bumpOptions.readingCardIndex" min="0">
+            </div>
+        </div></div>
+        <div class="settings-item advanced-only"><div class="settings-item-inner settings-item-inner-wrappable">
+            <div class="settings-item-left">
+                <div class="settings-item-label">Target model names</div>
+                <div class="settings-item-description">Comma-separated list of Anki model names to target for bumping.</div>
+            </div>
+            <div class="settings-item-right">
+                <input type="text" spellcheck="false" data-setting="anki.bumpOptions.targetModelNames"
+                    data-transform='[
+                        {"type": "splitTags", "step": "pre"},
+                        {"type": "joinTags", "step": "post"}
+                    ]'
+                >
+            </div>
+        </div></div>
         <div class="settings-item advanced-only" id="anki-target-tags-option" hidden><div class="settings-item-inner settings-item-inner-wrappable">
             <div class="settings-item-left">
                 <div class="settings-item-label">Target tags</div>
