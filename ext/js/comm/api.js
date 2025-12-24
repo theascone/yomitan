@@ -148,10 +148,11 @@ export class API {
     /**
      * @param {import('api').ApiParam<'bumpNotes', 'noteIds'>} noteIds
      * @param {import('api').ApiParam<'bumpNotes', 'mode'>} mode
+     * @param {import('api').ApiParam<'bumpNotes', 'bumpOptions'>} bumpOptions
      * @returns {Promise<import('api').ApiReturn<'bumpNotes'>>}
      */
-    bumpNotes(noteIds, mode) {
-        return this._invoke('bumpNotes', {noteIds, mode});
+    bumpNotes(noteIds, mode, bumpOptions) {
+        return this._invoke('bumpNotes', {noteIds, mode, bumpOptions});
     }
 
     /**

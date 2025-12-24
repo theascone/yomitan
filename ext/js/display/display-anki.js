@@ -98,6 +98,13 @@ export class DisplayAnki {
         this._cardFormats = [];
         /** @type {import('settings').DictionariesOptions} */
         this._dictionaries = [];
+        /** @type {import('settings').AnkiBumpOptions} */
+        this._bumpOptions = {
+            bumpLogFieldName: 'BumpLog',
+            listeningCardIndex: 0,
+            readingCardIndex: 1,
+            targetModelNames: [],
+        };
         /** @type {HTMLElement} */
         this._menuContainer = querySelectorNotNull(document, '#popup-menus');
         /** @type {(event: MouseEvent) => void} */
@@ -117,7 +124,7 @@ export class DisplayAnki {
         /** @type {boolean} */
         this._forceSync = false;
         /** @type {boolean} */
-        this.__noteDupeCheckFirst = false;
+        this._noteDupeCheckFirst = false;
     }
 
     /** */
@@ -132,6 +139,7 @@ export class DisplayAnki {
         this._display.on('optionsUpdated', this._onOptionsUpdated.bind(this));
         this._display.on('contentClear', this._onContentClear.bind(this));
         this._display.on('contentUpdateStart', this._onContentUpdateStart.bind(this));
+        this._display.on('contentUpdateEntry', this._onContentUpdateEntry.bind(this));
         this._display.on('contentUpdateComplete', this._onContentUpdateComplete.bind(this));
         this._display.on('logDictionaryEntryData', this._onLogDictionaryEntryData.bind(this));
     }
@@ -218,6 +226,7 @@ export class DisplayAnki {
                 downloadTimeout,
                 forceSync,
                 noteDupeCheckFirst,
+                bumpOptions,
             },
             scanning: {length: scanLength},
         } = options;
@@ -242,6 +251,7 @@ export class DisplayAnki {
         this._dictionaries = dictionaries;
         this._forceSync = forceSync;
         this._noteDupeCheckFirst = noteDupeCheckFirst;
+        this._bumpOptions = bumpOptions;
 
         void this._updateAnkiFieldTemplates(options);
     }
@@ -644,7 +654,8 @@ export class DisplayAnki {
         if (this._checkForDuplicates && this._noteDupeCheckFirst) { this._removeDupeIndicators(); }
         const displayTagsAndFlags = this._displayTagsAndFlags;
         for (let entryIndex = 0, entryCount = dictionaryEntryDetails.length; entryIndex < entryCount; ++entryIndex) {
-            var allNoteIds = [];
+            /** @type {number[]} */
+            let allNoteIds = [];
             for (const [cardFormatIndex, {canAdd, noteIds, noteInfos, ankiError}] of dictionaryEntryDetails[entryIndex].noteMap.entries()) {
                 const button = this._createSaveButtons(entryIndex, cardFormatIndex);
                 if (button !== null) {
@@ -662,7 +673,7 @@ export class DisplayAnki {
 
                 const validNoteIds = noteIds?.filter((id) => id !== INVALID_NOTE_ID) ?? [];
 
-                allNoteIds = [...allNoteIds, ...validNoteIds];
+                allNoteIds.push(...validNoteIds);
                 this._createViewNoteButton(entryIndex, cardFormatIndex, validNoteIds, Array.isArray(noteInfos) ? noteInfos : []);
 
                 if (displayTagsAndFlags !== 'never' && Array.isArray(noteInfos)) {
@@ -1534,7 +1545,7 @@ export class DisplayAnki {
     async _bumpNotes(node, mode) {
         const noteIds = this._getNodeNoteIds(node);
         if (noteIds.length === 0) { return; }
-        await this._display.application.api.bumpNotes(noteIds, mode);
+        await this._display.application.api.bumpNotes(noteIds, mode, this._bumpOptions);
     }
 
     /**

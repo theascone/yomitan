@@ -376,31 +376,33 @@ export class AnkiConnect {
     /**
      * @param {import('anki').NoteId[]} noteIds
      * @param {string} mode
+     * @param {import('settings').AnkiBumpOptions} bumpOptions
      */
-    async bumpNotes(noteIds, mode) {
-        // TODO make this configurable
-        const bumpLogFieldName = "BumpLog"
-        const listeningCardIdx = 1;
-        const readingCardIdx = 0;
+    async bumpNotes(noteIds, mode, bumpOptions) {
+        const {bumpLogFieldName, listeningCardIndex, readingCardIndex, targetModelNames} = bumpOptions;
 
         const time = Date.now();
 
-        let noteInfos = await this._invoke('notesInfo', {notes: noteIds});
+        const noteInfos = await this.notesInfo(noteIds);
         for (const noteInfo of noteInfos) {
-            if (noteInfo.modelName !== "Mining") continue;
-            let json = noteInfo.fields[bumpLogFieldName].value
-            let data = parseJson(`{"${listeningCardIdx}": [], "${readingCardIdx}": []}`)
+            if (noteInfo === null) continue;
+            // Check if note model is in the target list
+            if (!targetModelNames.includes(noteInfo.modelName)) continue;
+
+            let json = noteInfo.fields[bumpLogFieldName]?.value || "";
+            /** @type {{[key: string]: number[]}} */
+            let data = /** @type {{[key: string]: number[]}} */ (parseJson(`{"${listeningCardIndex}": [], "${readingCardIndex}": []}`));
             if (json !== "") {
-                data = parseJson(json);
+                data = /** @type {{[key: string]: number[]}} */ (parseJson(json));
             }
 
             let key = -1;
             switch (mode) {
                 case "listening":
-                    key = listeningCardIdx;
+                    key = listeningCardIndex;
                     break;
                 case "reading":
-                    key = readingCardIdx;
+                    key = readingCardIndex;
                     break;
             };
 
@@ -412,9 +414,11 @@ export class AnkiConnect {
 
             let cardInfos = await this._invoke('cardsInfo', {cards: noteInfo.cards});
             for (const cardInfo of cardInfos) {
+                if (cardInfo === null) continue;
                 if (cardInfo.ord !== key) continue;
 
                 //await this._invoke('unsuspend', {cards: [cardInfo.cardId]});
+                // cardState 0 = new card, don't reschedule new cards
                 if (cardInfo.type !== 0) {
                     await this._invoke('setDueDate', {
                         cards: [cardInfo.cardId],
