@@ -256,6 +256,9 @@ export class DisplayAnki {
         this._bumpOptions = bumpOptions;
 
         void this._updateAnkiFieldTemplates(options);
+        if (this._dictionaryEntryDetails !== null) {
+            this._updateSaveButtons(this._dictionaryEntryDetails);
+        }
     }
 
     /** */
@@ -1483,9 +1486,10 @@ export class DisplayAnki {
         }
         allNoteIds = [...new Set(allNoteIds)];
 
-        const disabled = (allNoteIds.length === 0);
-        button.disabled = disabled;
-        button.hidden = disabled;
+        const noNoteIds = (allNoteIds.length === 0);
+        const noTargetModels = this._bumpOptions.targetModelNames.length === 0;
+        button.disabled = noNoteIds || noTargetModels;
+        button.hidden = noNoteIds;
         button.dataset.noteIds = [...allNoteIds].join(' ');
     }
 
@@ -1544,6 +1548,13 @@ export class DisplayAnki {
     async _bumpNotes(node, mode) {
         const noteIds = this._getNodeNoteIds(node);
         if (noteIds.length === 0) { return; }
+        if (this._bumpOptions.targetModelNames.length === 0) {
+            this._showErrorNotification(
+                [new Error('Add at least one bump target model name under Settings → Anki (advanced).')],
+                void 0,
+            );
+            return;
+        }
         try {
             await this._display.application.api.bumpNotes(noteIds, mode, this._bumpOptions);
         } catch (e) {
