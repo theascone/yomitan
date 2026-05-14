@@ -379,9 +379,17 @@ export class AnkiConnect {
      * @param {import('settings').AnkiBumpOptions} bumpOptions
      */
     async bumpNotes(noteIds, mode, bumpOptions) {
+        if (!this._enabled) { return; }
+        await this._checkVersion();
+
         const {bumpLogFieldName, listeningCardIndex, readingCardIndex, targetModelNames} = bumpOptions;
 
         const time = Date.now();
+        const listeningKey = String(listeningCardIndex);
+        const readingKey = String(readingCardIndex);
+
+        /** @returns {{[key: string]: number[]}} */
+        const emptyBumpData = () => ({[listeningKey]: [], [readingKey]: []});
 
         const noteInfos = await this.notesInfo(noteIds);
         for (const noteInfo of noteInfos) {
@@ -390,9 +398,22 @@ export class AnkiConnect {
             if (!targetModelNames.includes(noteInfo.modelName)) { continue; }
 
             const json = noteInfo.fields[bumpLogFieldName]?.value || '';
-            const emptyTemplate = `{"${String(listeningCardIndex)}":[],"${String(readingCardIndex)}":[]}`;
             /** @type {{[key: string]: number[]}} */
-            const data = /** @type {{[key: string]: number[]}} */ (json !== '' ? parseJson(json) : parseJson(emptyTemplate));
+            let data = emptyBumpData();
+            if (json !== '') {
+                try {
+                    const parsed = parseJson(json);
+                    if (isObjectNotArray(parsed)) {
+                        const o = /** @type {import('core').UnknownObject} */ (parsed);
+                        for (const key of [listeningKey, readingKey]) {
+                            const v = o[key];
+                            data[key] = (Array.isArray(v) && v.every((x) => typeof x === 'number')) ? [...v] : [];
+                        }
+                    }
+                } catch {
+                    data = emptyBumpData();
+                }
+            }
 
             let key = -1;
             switch (mode) {
@@ -403,8 +424,13 @@ export class AnkiConnect {
                     key = readingCardIndex;
                     break;
             }
+            if (key < 0) { continue; }
 
-            data[String(key)].push(time);
+            const dataKey = String(key);
+            if (!Array.isArray(data[dataKey])) {
+                data[dataKey] = [];
+            }
+            data[dataKey].push(time);
 
             await this._invoke('updateNoteFields', {
                 note: {id: noteInfo.noteId, fields: {[bumpLogFieldName]: JSON.stringify(data)}},

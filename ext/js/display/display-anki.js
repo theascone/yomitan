@@ -132,8 +132,10 @@ export class DisplayAnki {
         this._noteContext = this._getNoteContext();
         /* eslint-disable @stylistic/no-multi-spaces */
         this._display.hotkeyHandler.registerActions([
-            ['addNote',     this._hotkeySaveAnkiNoteForSelectedEntry.bind(this)],
-            ['viewNotes',   this._hotkeyViewNotesForSelectedEntry.bind(this)],
+            ['addNote',         this._hotkeySaveAnkiNoteForSelectedEntry.bind(this)],
+            ['viewNotes',       this._hotkeyViewNotesForSelectedEntry.bind(this)],
+            ['bumpListening',   this._hotkeyBumpNoteForSelectedEntry.bind(this, 'listening')],
+            ['bumpReading',     this._hotkeyBumpNoteForSelectedEntry.bind(this, 'reading')],
         ]);
         /* eslint-enable @stylistic/no-multi-spaces */
         this._display.on('optionsUpdated', this._onOptionsUpdated.bind(this));
@@ -1485,8 +1487,6 @@ export class DisplayAnki {
         button.disabled = disabled;
         button.hidden = disabled;
         button.dataset.noteIds = [...allNoteIds].join(' ');
-
-        this._eventListeners.addEventListener(button, 'click', this._onNoteBumpBind);
     }
 
     /**
@@ -1544,7 +1544,22 @@ export class DisplayAnki {
     async _bumpNotes(node, mode) {
         const noteIds = this._getNodeNoteIds(node);
         if (noteIds.length === 0) { return; }
-        await this._display.application.api.bumpNotes(noteIds, mode, this._bumpOptions);
+        try {
+            await this._display.application.api.bumpNotes(noteIds, mode, this._bumpOptions);
+        } catch (e) {
+            this._showErrorNotification([toError(e)], void 0);
+        }
+    }
+
+    /**
+     * @param {'listening'|'reading'} mode
+     * @param {unknown} [_argument]
+     */
+    _hotkeyBumpNoteForSelectedEntry(mode, _argument) {
+        const index = this._display.selectedIndex;
+        const button = this._getBumpNoteButton(index, mode);
+        if (button === null || button.disabled || button.hidden) { return; }
+        void this._bumpNotes(button, mode);
     }
 
     /**
