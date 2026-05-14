@@ -314,7 +314,6 @@ export class DisplayAnki {
         const element = /** @type {HTMLElement} */ (e.currentTarget);
         const mode = this._getValidBumpMode(element.dataset.mode);
         if (mode === null) { return; }
-        //const index = this._display.getElementDictionaryEntryIndex(element);
         void this._bumpNotes(element, mode);
     }
 
@@ -655,7 +654,7 @@ export class DisplayAnki {
         const displayTagsAndFlags = this._displayTagsAndFlags;
         for (let entryIndex = 0, entryCount = dictionaryEntryDetails.length; entryIndex < entryCount; ++entryIndex) {
             /** @type {number[]} */
-            let allNoteIds = [];
+            const allNoteIds = [];
             for (const [cardFormatIndex, {canAdd, noteIds, noteInfos, ankiError}] of dictionaryEntryDetails[entryIndex].noteMap.entries()) {
                 const button = this._createSaveButtons(entryIndex, cardFormatIndex);
                 if (button !== null) {
@@ -682,8 +681,8 @@ export class DisplayAnki {
                 }
             }
 
-            this._updateBumpNodeButton(entryIndex, "listening", allNoteIds, false);
-            this._updateBumpNodeButton(entryIndex, "reading", allNoteIds, false);
+            this._updateBumpNodeButton(entryIndex, 'listening', allNoteIds, false);
+            this._updateBumpNodeButton(entryIndex, 'reading', allNoteIds, false);
         }
     }
 
@@ -989,8 +988,8 @@ export class DisplayAnki {
 
                 this._updateViewNoteButton(dictionaryEntryIndex, cardFormatIndex, [noteId]);
 
-                this._updateBumpNodeButton(dictionaryEntryIndex, "listening", [noteId], true);
-                this._updateBumpNodeButton(dictionaryEntryIndex, "reading", [noteId], true);
+                this._updateBumpNodeButton(dictionaryEntryIndex, 'listening', [noteId], true);
+                this._updateBumpNodeButton(dictionaryEntryIndex, 'reading', [noteId], true);
 
                 if (this._forceSync) {
                     try {
@@ -1691,7 +1690,7 @@ export class DisplayAnki {
      * @returns {string|null}
      */
     _getValidBumpMode(value) {
-        switch(value) {
+        switch (value) {
             case 'listening':
             case 'reading':
                 return value;

@@ -70,6 +70,10 @@ export type CardInfo = {
     cardId: CardId;
     flags: number;
     cardState: number;
+    /** Card template ordinal (AnkiConnect `ord`). */
+    ord: number;
+    /** Anki card type: 0=new, 1=learning, 2=review, 3=relearning (AnkiConnect `type`). */
+    cardKind: number;
 };
 
 export type ApiReflectResult = {

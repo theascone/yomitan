@@ -549,6 +549,12 @@ function createProfileOptionsUpdatedTestData1() {
             downloadTimeout: 0,
             forceSync: false,
             noteDupeCheckFirst: false,
+            bumpOptions: {
+                bumpLogFieldName: 'BumpLog',
+                listeningCardIndex: 0,
+                readingCardIndex: 1,
+                targetModelNames: [],
+            },
         },
         sentenceParsing: {
             scanExtent: 200,
@@ -705,7 +711,7 @@ function createOptionsUpdatedTestData1() {
             },
         ],
         profileCurrent: 0,
-        version: 75,
+        version: 76,
         global: {
             database: {
                 prefixWildcardsSupported: false,

@@ -385,50 +385,48 @@ export class AnkiConnect {
 
         const noteInfos = await this.notesInfo(noteIds);
         for (const noteInfo of noteInfos) {
-            if (noteInfo === null) continue;
+            if (noteInfo === null) { continue; }
             // Check if note model is in the target list
-            if (!targetModelNames.includes(noteInfo.modelName)) continue;
+            if (!targetModelNames.includes(noteInfo.modelName)) { continue; }
 
-            let json = noteInfo.fields[bumpLogFieldName]?.value || "";
+            const json = noteInfo.fields[bumpLogFieldName]?.value || '';
+            const emptyTemplate = `{"${String(listeningCardIndex)}":[],"${String(readingCardIndex)}":[]}`;
             /** @type {{[key: string]: number[]}} */
-            let data = /** @type {{[key: string]: number[]}} */ (parseJson(`{"${listeningCardIndex}": [], "${readingCardIndex}": []}`));
-            if (json !== "") {
-                data = /** @type {{[key: string]: number[]}} */ (parseJson(json));
-            }
+            const data = /** @type {{[key: string]: number[]}} */ (json !== '' ? parseJson(json) : parseJson(emptyTemplate));
 
             let key = -1;
             switch (mode) {
-                case "listening":
+                case 'listening':
                     key = listeningCardIndex;
                     break;
-                case "reading":
+                case 'reading':
                     key = readingCardIndex;
                     break;
-            };
+            }
 
             data[String(key)].push(time);
 
             await this._invoke('updateNoteFields', {
-                note: {id: noteInfo.noteId, fields: {[bumpLogFieldName]: JSON.stringify(data)}}
+                note: {id: noteInfo.noteId, fields: {[bumpLogFieldName]: JSON.stringify(data)}},
             });
 
-            let cardInfos = await this._invoke('cardsInfo', {cards: noteInfo.cards});
+            const cardInfos = await this.cardsInfo(noteInfo.cards);
             for (const cardInfo of cardInfos) {
-                if (cardInfo === null) continue;
-                if (cardInfo.ord !== key) continue;
+                if (cardInfo === null) { continue; }
+                if (cardInfo.ord !== key) { continue; }
 
-                //await this._invoke('unsuspend', {cards: [cardInfo.cardId]});
-                // cardState 0 = new card, don't reschedule new cards
-                if (cardInfo.type !== 0) {
+                // await this._invoke('unsuspend', {cards: [cardInfo.cardId]});
+                // cardKind 0 = new card, don't reschedule new cards
+                if (cardInfo.cardKind !== 0) {
                     await this._invoke('setDueDate', {
                         cards: [cardInfo.cardId],
-                        days: "0"
+                        days: '0',
                     });
                     await this._invoke('answerCards', {
                         answers: [{
                             cardId: cardInfo.cardId,
-                            ease: 1
-                        }]
+                            ease: 1,
+                        }],
                     });
                 }
             }
@@ -781,7 +779,7 @@ export class AnkiConnect {
                 result2.push(null);
                 continue;
             }
-            const {note, flags, queue} = /** @type {{[key: string]: unknown}} */ (item);
+            const {note, flags, queue, ord, type} = /** @type {{[key: string]: unknown}} */ (item);
             if (typeof note !== 'number') {
                 result2.push(null);
                 continue;
@@ -793,6 +791,8 @@ export class AnkiConnect {
                 cardId,
                 flags: typeof flags === 'number' ? flags : 0,
                 cardState: typeof queue === 'number' ? queue : 0,
+                ord: typeof ord === 'number' ? ord : 0,
+                cardKind: typeof type === 'number' ? type : 0,
             };
             result2.push(item2);
         }
